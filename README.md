@@ -9,8 +9,6 @@ The Leads Dashboard is an interactive web application built using R and Shiny. I
 - **Filtering**: Filter data by date range, lead source, or other relevant criteria.
 - **Export**: Export visualizations and summary statistics for reporting purposes.
 
-![alt text](<Screenshot 2024-10-10 223720.png>)
-
 ![alt text](<Screenshot 2024-10-10 223833.png>)
 
 ![alt text](<Screenshot 2024-10-10 223939.png>)
