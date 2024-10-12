@@ -16,7 +16,7 @@ body, .content-wrapper, .right-side, .main-footer, .main-header, .sidebar, .cont
     justify-content: flex-start; /* Align items to the start of the container */
     margin-left: 150px; /* Match the sidebar width */
     position: relative; /* Ensure the container is positioned correctly */
-    width: 220px; /* Match the width of the sidebar-footer */
+    width: 420px; /* Match the width of the sidebar-footer */
     text-align: center; /* Center the title text */
     padding: 5px 0; /* Add padding to give some space around the title */
     background-color: #fff; /* Light background color to distinguish the title area */

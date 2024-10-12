@@ -27,6 +27,8 @@ my_theme <- bs_theme(
 source("modules/data_processing.R")
 source("modules/medicalleadsmetrics.R")
 source("modules/motorleadsmetrics.R")
+source("modules/drysalesmotor.R")
+source("modules/drysalesmedical.R")
 
 # Here's a simplified example of how you might set up the dashboard UI to display these metrics:
 ui <- dashboardPage(
@@ -38,7 +40,7 @@ ui <- dashboardPage(
   dashboardHeader(
     tags$li(
       class = "text-center header-title-container",  # Added a new class for more specific styling
-      tags$h4("Leads Dashboard", class = "header-title")
+      tags$h4("Customer Engagement Dashboard", class = "header-title")
     ),
   titleWidth = 400,
   controlbarIcon = NULL,
@@ -65,8 +67,8 @@ ui <- dashboardPage(
         class = "leads-container",
         tags$h3("Dry Sales Days", class = "leads-title"),
         sidebarMenu(
-          menuItem("Motor", tabName = "reports", icon = icon("chart-line")),
-          menuItem("Medical", tabName = "settings", icon = icon("tools"))
+          menuItem("Motor", tabName = "drysalesmotor", icon = icon("chart-line")),
+          menuItem("Medical", tabName = "drysalesmedical", icon = icon("tools"))
         )
       )
     ),
@@ -82,7 +84,9 @@ ui <- dashboardPage(
     ),
     tabItems(
       tabItem(tabName = "motormetrics", leadsmotorUI("motormetricsMod")),
-      tabItem(tabName = "medicalmetrics", leadsmedicalUI("medicalmetricsMod"))
+      tabItem(tabName = "medicalmetrics", leadsmedicalUI("medicalmetricsMod")),
+      tabItem(tabName = "drysalesmotor", drysalesmotorUI("drysalesmotorMod")),
+      tabItem(tabName = "drysalesmedical", drysalesmedicalUI("drysalesmedicalMod"))
     ),
     div(class = "body-footer", "© 2024 Leads Dashboard") 
   ),
@@ -132,7 +136,21 @@ server <- function(input, output, session) {
   #load and process medical data
   leads_medical <- read_and_process_data_medical("data/Medical Leads.xlsx")
 
-  
+    # Reactive expression to load and process data
+  drysalesmotor <- reactive({
+    # Assuming you have a function `read_and_process_data_drysalesmotor` to load and process your data
+    read_and_process_data_drysalesmotor("data/Dry Shifts Data.xlsx")
+  })
+
+
+
+  # Reactive expression to load and process data
+  drysalesmedical <- reactive({
+    # Assuming you have a function `read_and_process_data_drysalesmotor` to load and process your data
+    read_and_process_data_drysalesmedical("data/Dry Shifts Data.xlsx")
+  })
+
+
   #Data_medical <- read_and_process_data("data/Medical Leads.xlsx")
   
   #Medical
@@ -229,6 +247,16 @@ server <- function(input, output, session) {
   leadsmedicalServer("medicalmetricsMod", filtered_data__leads_medical)
 
 
+#3. DRY SALES MOTOR -----------------------------------------------------------------------------------------------------------------------------------
+
+  # Call the dry sales motor metrics module
+  drysalesmotorServer("drysalesmotorMod", drysalesmotor)
+  
+
+#4. DRY SALES MEDICAL ---------------------------------------------------------------------------------------------------------------------------------
+
+  # Call the dry sales medical metrics module
+  drysalesmedicalServer("drysalesmedicalMod", drysalesmedical)
 
 }
 
