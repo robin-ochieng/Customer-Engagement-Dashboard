@@ -16,12 +16,11 @@ drysalesmotorUI <- function(id) {
           plotlyOutput(ns("dayNightComparison")) %>% withSpinner(type = 6)),
     box(title = "Staff Performance on Dry Shifts", status = "white", solidHeader = TRUE,
           plotlyOutput(ns("staffPerformance")) %>% withSpinner(type = 6)),
-    box(title = "Prospect to Lead Conversion Rate", status = "white", solidHeader = TRUE,
-          plotlyOutput(ns("prospectToLeadConversion")) %>% withSpinner(type = 6)),
-    box(title = "Dry Shift Frequency by Day Type", status = "white", solidHeader = TRUE, 
+    box(title = "Dry Shifts by Time of Day", status = "white", solidHeader = TRUE,
           plotlyOutput(ns("dryShiftFrequencyByDayType")) %>% withSpinner(type = 6)),
-    box(title = "Correlation Heatmap", status = "white", solidHeader = TRUE,
-          plotlyOutput(ns("correlationHeatmap")) %>% withSpinner(type = 6)),
+    box(title = "Total Dry Sales Leads by Day of the Week", status = "white", solidHeader = TRUE,
+          plotOutput(ns("totalLeadsByDayOfWeek")) %>% withSpinner(type = 6)),
+
 
   )
  )
@@ -170,42 +169,22 @@ output$staffPerformance <- renderPlotly({
       paper_bgcolor = "white"
     )
 })
-
-output$prospectToLeadConversion <- renderPlotly({
-  data <- reactiveData() %>%
-    mutate(ConversionRate = ifelse(Prospect > 0, Closed / Prospect * 100, 0)) %>%
-    group_by(Date) %>%
-    summarise(AverageConversionRate = mean(ConversionRate, na.rm = TRUE), .groups = "drop") %>%
-    arrange(Date)
-
-  plot_ly(data, x = ~Date, y = ~AverageConversionRate, type = 'scatter', mode = 'lines+markers',
-          line = list(color = '#32CD32'), marker = list(color = '#006400'),
-          hoverinfo = 'text',
-          text = ~paste('Date:', Date, '<br>Conversion Rate:', sprintf("%.2f%%", AverageConversionRate))) %>%
-    layout(
-      title = "Prospect to Lead Conversion Rate Over Time",
-      xaxis = list(title = "Date", tickformat = "%b %d, %Y"),
-      yaxis = list(title = "Average Conversion Rate (%)"),
-      font = list(family = "Arial", color = "black"),
-      plot_bgcolor = "white",
-      paper_bgcolor = "white",
-      hovermode = 'closest'
-    )
-})
-
-output$dryShiftFrequencyByDayType <- renderPlotly({
+output$dryShiftsByTimeOfDay <- renderPlotly({
   data <- reactiveData() %>%
     filter(Closed == 0) %>%
-    group_by(`Day Type`) %>%
-    summarise(TotalDryShifts = n(), .groups = "drop")
+    group_by(`Time of Day`) %>%
+    summarise(DryShifts = n(), .groups = "drop") %>%
+    mutate(Percentage = DryShifts / sum(DryShifts) * 100) %>%
+    arrange(desc(DryShifts))
 
-  plot_ly(data, x = ~`Day Type`, y = ~TotalDryShifts, type = 'bar',
-          marker = list(color = c('Weekday' = '#1E90FF', 'Weekend' = '#FFA07A')),
+  plot_ly(data, x = ~`Time of Day`, y = ~DryShifts, type = 'bar',
+          text = ~paste(sprintf("%.2f%%", Percentage)), # Adding percentage on the bar
           hoverinfo = 'text',
-          text = ~paste('Day Type:', `Day Type`, '<br>Total Dry Shifts:', TotalDryShifts)) %>%
+          hovertext = ~paste('Time of Day:', `Time of Day`, '<br>Dry Shifts:', DryShifts, '<br>Percentage:', sprintf("%.2f%%", Percentage)),
+          marker = list(color = c('Day' = '#1E90FF', 'Night' = '#6495ED'))) %>%
     layout(
-      title = "Dry Shift Frequency by Day Type",
-      xaxis = list(title = "Day Type"),
+      title = "Distribution of Dry Shifts by Time of Day",
+      xaxis = list(title = "Time of Day"),
       yaxis = list(title = "Number of Dry Shifts"),
       font = list(family = "Arial", color = "black"),
       plot_bgcolor = "white",
@@ -213,26 +192,66 @@ output$dryShiftFrequencyByDayType <- renderPlotly({
     )
 })
 
-output$correlationHeatmap <- renderPlotly({
+output$dryShiftFrequencyByDayType <- renderPlotly({
+  # Prepare the data
   data <- reactiveData() %>%
-    select(Prospect, Closed, `Total Leads`) %>%
-    cor(use = "complete.obs")  # Calculating the correlation matrix
+    filter(Closed == 0) %>%
+    group_by(`Time of Day`) %>%
+    summarise(DryShifts = n(), .groups = "drop") %>%
+    mutate(Percentage = DryShifts / sum(DryShifts) * 100) %>%
+    arrange(`Time of Day`)
 
-  plot_ly(x = colnames(data), y = colnames(data), z = as.matrix(data),
-          type = 'heatmap', colorscale = 'Viridis',
-          hoverinfo = 'text',
-          text = ~paste('Correlation:', formatC(data, format = 'e', digits = 2))) %>%
-    layout(
-      title = "Correlation Heatmap",
-      xaxis = list(title = "Metrics"),
-      yaxis = list(title = "Metrics"),
-      font = list(family = "Arial", color = "black"),
-      plot_bgcolor = "white",
-      paper_bgcolor = "white"
-    )
+  # Determine the base, increases, and text for each step
+  text_labels <- paste(data$`Time of Day`, ":", data$DryShifts, " shifts (", sprintf("%.2f%%", data$Percentage), ")", sep = "")
+
+  plot_ly(type = "waterfall",
+          measure = c("relative", "relative"),
+          x = data$`Time of Day`,
+          text = text_labels,
+          y = data$DryShifts,
+          connector = list(line = list(color = "rgb(63, 63, 63)")),
+          decreasing = list(marker = list(color = "rgb(10, 132, 255)", line = list(color = "rgb(10, 132, 255)", width = 3))),
+          increasing = list(marker = list(color = "rgb(10, 132, 255)", line = list(color = "rgb(10, 132, 255)", width = 3))),
+          totals = list(marker = list(color = "rgb(0, 123, 255)", line = list(color = "rgb(0, 123, 255)", width = 3)))
+  ) %>%
+    layout(title = "Dry Shifts by Time of Day",
+           xaxis = list(title = "Time of Day"),
+           yaxis = list(title = "Number of Dry Shifts", autorange = TRUE),
+           font = list(family = "Arial", color = "black"),
+           showlegend = FALSE,
+           annotations = list(
+             text = "Percentage",
+             x = data$`Time of Day`,
+             y = data$DryShifts,
+             showarrow = TRUE,
+             font = list(family = "Arial", size = 14, color = "black"),
+             align = "center",
+             xanchor = "center",
+             yanchor = "bottom",
+             yshift = 10
+           ),
+           plot_bgcolor = "white",
+           paper_bgcolor = "white")
 })
 
 
+output$totalLeadsByDayOfWeek <- renderPlot({
+  data <- reactiveData() %>%
+    filter(Closed == 0) %>%
+    mutate(Weekday = wday(Date, label = TRUE, abbr = FALSE)) %>%
+    group_by(Weekday) %>%
+    summarise(TotalLeads = sum(`Total Leads`, na.rm = TRUE), .groups = "drop") %>%
+    arrange(Weekday)  # Ensure days are sorted from Monday to Sunday
+
+  ggplot(data, aes(x = Weekday, y = TotalLeads)) +
+    geom_bar(stat = "identity", fill = "#4682B4") +
+    geom_text(aes(label = scales::comma(TotalLeads)), vjust = -0.3, size = 3.5) +
+    labs(title = "Total Dry Sales Leads by Day of the Week", x = "Day of the Week", y = "Sum of Total Leads") +
+    theme_minimal() +
+    theme(text = element_text(family = "Mulish"),
+          axis.title = element_text(size = 12),
+          plot.title = element_text(size = 14))
+})
 
 })
 
