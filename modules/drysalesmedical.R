@@ -16,8 +16,8 @@ drysalesmedicalUI <- function(id) {
           plotlyOutput(ns("staffPerformance")) %>% withSpinner(type = 6)),
     box(title = "Dry Shifts by Time of Day", status = "white", solidHeader = TRUE,
           plotlyOutput(ns("dryShiftFrequencyByDayType")) %>% withSpinner(type = 6)),
-    box(title = "Total Dry Sales Leads by Day of the Week", status = "white", solidHeader = TRUE,
-          plotOutput(ns("totalLeadsByDayOfWeek")) %>% withSpinner(type = 6)),
+    box(title = "Total Prospects by Day of the Week", status = "white", solidHeader = TRUE,
+          plotOutput(ns("totalProspectsByDayOfWeek")) %>% withSpinner(type = 6)),
   )
  )
 }
@@ -211,18 +211,18 @@ output$dryShiftFrequencyByDayType <- renderPlotly({
 })
 
 
-output$totalLeadsByDayOfWeek <- renderPlot({
+output$totalProspectsByDayOfWeek <- renderPlot({
   data <- reactiveData() %>%
     filter(Closed == 0) %>%
     mutate(Weekday = wday(Date, label = TRUE, abbr = FALSE)) %>%
     group_by(Weekday) %>%
-    summarise(TotalLeads = sum(`Total Leads`, na.rm = TRUE), .groups = "drop") %>%
+    summarise(TotalProspects = sum(`Prospect`, na.rm = TRUE), .groups = "drop") %>%
     arrange(Weekday)  # Ensure days are sorted from Monday to Sunday
 
-  ggplot(data, aes(x = Weekday, y = TotalLeads)) +
+  ggplot(data, aes(x = Weekday, y = TotalProspects)) +
     geom_bar(stat = "identity", fill = "#4682B4") +
-    geom_text(aes(label = scales::comma(TotalLeads)), vjust = -0.3, size = 3.5) +
-    labs(title = "Total Dry Sales Leads by Day of the Week", x = "Day of the Week", y = "Sum of Total Leads") +
+    geom_text(aes(label = scales::comma(TotalProspects)), vjust = -0.3, size = 3.5) +
+    labs(title = "Total Prospects by Day of the Week", x = "Day of the Week", y = "Sum of Prospects") +
     theme_minimal() +
     theme(text = element_text(family = "Mulish"),
           axis.title = element_text(size = 12),
