@@ -10,8 +10,6 @@ drysalesmedicalUI <- function(id) {
   fluidRow(
     box(title = "Dry Sales Distribution by Day of the Week", status = "white", solidHeader = TRUE, 
           plotOutput(ns("drysalesbydayofweek")) %>% withSpinner(type = 6)),
-    box(title = "Dry Sales Distribution by Day", status = "white", solidHeader = TRUE,
-          plotlyOutput(ns("drysalesbyday")) %>% withSpinner(type = 6)),
     box(title = "Staff Performance on Dry Shifts", status = "white", solidHeader = TRUE,
           plotlyOutput(ns("staffPerformance")) %>% withSpinner(type = 6)),
     box(title = "Dry Shifts by Time of Day", status = "white", solidHeader = TRUE,
@@ -132,11 +130,13 @@ output$staffPerformance <- renderPlotly({
     summarise(DryShifts = n(), .groups = "drop") %>%
     arrange(desc(DryShifts))
 
-  plot_ly(data, x = ~`Staff on Duty`, y = ~DryShifts, type = 'bar', color = ~`Time of Day`, colors = c("Day" = "#FF6347", "Night" = "#4682B4"),
+  plot_ly(data, x = ~`Staff on Duty`, y = ~DryShifts, type = 'bar',
+          color = ~`Time of Day`,
+          colors = c("Day" = "#FF6347", "Night" = "#4682B4"),
           hoverinfo = 'text',
           text = ~paste('Staff:', `Staff on Duty`, '<br>Time of Day:', `Time of Day`, '<br>Dry Shifts:', DryShifts)) %>%
     layout(
-      barmode = 'group',
+      barmode = 'stack',
       title = "Staff Performance on Dry Shifts",
       xaxis = list(title = "Staff on Duty"),
       yaxis = list(title = "Number of Dry Shifts"),
@@ -145,6 +145,7 @@ output$staffPerformance <- renderPlotly({
       paper_bgcolor = "white"
     )
 })
+
 output$dryShiftsByTimeOfDay <- renderPlotly({
   data <- reactiveData() %>%
     filter(Closed == 0) %>%
@@ -152,7 +153,6 @@ output$dryShiftsByTimeOfDay <- renderPlotly({
     summarise(DryShifts = n(), .groups = "drop") %>%
     mutate(Percentage = DryShifts / sum(DryShifts) * 100) %>%
     arrange(desc(DryShifts))
-
   plot_ly(data, x = ~`Time of Day`, y = ~DryShifts, type = 'bar',
           text = ~paste(sprintf("%.2f%%", Percentage)), # Adding percentage on the bar
           hoverinfo = 'text',
@@ -168,6 +168,7 @@ output$dryShiftsByTimeOfDay <- renderPlotly({
     )
 })
 
+
 output$dryShiftFrequencyByDayType <- renderPlotly({
   # Prepare the data
   data <- reactiveData() %>%
@@ -178,7 +179,7 @@ output$dryShiftFrequencyByDayType <- renderPlotly({
     arrange(`Time of Day`)
 
   # Determine the base, increases, and text for each step
-  text_labels <- paste(data$`Time of Day`, ":", data$DryShifts, " shifts (", sprintf("%.2f%%", data$Percentage), ")", sep = "")
+  text_labels <- paste(data$`Time of Day`, " Shift : ", data$DryShifts, " (", sprintf("%.2f%%", data$Percentage), ")", sep = "")
 
   plot_ly(type = "waterfall",
           measure = c("relative", "relative"),
@@ -193,19 +194,8 @@ output$dryShiftFrequencyByDayType <- renderPlotly({
     layout(title = "Dry Shifts by Time of Day",
            xaxis = list(title = "Time of Day"),
            yaxis = list(title = "Number of Dry Shifts", autorange = TRUE),
-           font = list(family = "Arial", color = "black"),
+           font = list(family = "Mulish", color = "black"),
            showlegend = FALSE,
-           annotations = list(
-             text = "Percentage",
-             x = data$`Time of Day`,
-             y = data$DryShifts,
-             showarrow = TRUE,
-             font = list(family = "Arial", size = 14, color = "black"),
-             align = "center",
-             xanchor = "center",
-             yanchor = "bottom",
-             yshift = 10
-           ),
            plot_bgcolor = "white",
            paper_bgcolor = "white")
 })
