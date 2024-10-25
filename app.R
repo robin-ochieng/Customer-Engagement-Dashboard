@@ -10,6 +10,8 @@ library(fresh)
 library(plotly)
 library(shinycssloaders)
 library(shinyjs)
+library(readr)
+library(tidyverse)
 
 # Define a custom theme using bslib
 my_theme <- bs_theme(
@@ -24,11 +26,14 @@ my_theme <- bs_theme(
   navbar_bg = "#333333",  
   navbar_fg = "#ffffff")
 
+# Sourcing the modules
 source("modules/data_processing.R")
 source("modules/medicalleadsmetrics.R")
 source("modules/motorleadsmetrics.R")
 source("modules/drysalesmotor.R")
 source("modules/drysalesmedical.R")
+source("modules/claims.R")
+
 
 # Here's a simplified example of how you might set up the dashboard UI to display these metrics:
 ui <- dashboardPage(
@@ -56,19 +61,27 @@ ui <- dashboardPage(
     dashboardSidebar(
       tags$div(
         class = "leads-container",
-        tags$h3("Leads", class = "leads-title"),
+        tags$h3("Leads Report", class = "leads-title"),
         sidebarMenu(
           menuItem("Motor", tabName = "motormetrics", icon = icon("car-side")),
           menuItem("Medical", tabName = "medicalmetrics", icon = icon("briefcase-medical"))
         )
       ),
-      tags$div(style = "margin-top: 60px;"),  # Small space between the two sections
+      tags$div(style = "margin-top: 50px;"),  
       tags$div(
         class = "leads-container",
-        tags$h3("Dry Sales Days", class = "leads-title"),
+        tags$h3("Dry Sales Report", class = "leads-title"),
         sidebarMenu(
           menuItem("Motor", tabName = "drysalesmotor", icon = icon("chart-line")),
           menuItem("Medical", tabName = "drysalesmedical", icon = icon("tools"))
+        )
+      ),
+      tags$div(style = "margin-top: 50px;"),  
+      tags$div(
+        class = "leads-container",
+        tags$h3("Claims Report", class = "leads-title"),
+        sidebarMenu(
+          menuItem("Claims", tabName = "claims", icon = icon("file-alt"))
         )
       )
     ),
@@ -86,11 +99,12 @@ ui <- dashboardPage(
       tabItem(tabName = "motormetrics", leadsmotorUI("motormetricsMod")),
       tabItem(tabName = "medicalmetrics", leadsmedicalUI("medicalmetricsMod")),
       tabItem(tabName = "drysalesmotor", drysalesmotorUI("drysalesmotorMod")),
-      tabItem(tabName = "drysalesmedical", drysalesmedicalUI("drysalesmedicalMod"))
+      tabItem(tabName = "drysalesmedical", drysalesmedicalUI("drysalesmedicalMod")),
+      tabItem(tabName = "claims", claimsUI("claimsMod"))
     ),
-    div(class = "body-footer", "© 2024 Leads Dashboard") 
+    div(class = "body-footer", "© 2024 Customer Engagement Dashboard - Kenbright") 
   ),
-  title = "Leads Dashboard",
+  title = "Customer Engagement Dashboard",
   skin = "blue",
   controlbar = dashboardControlbar(  
     skin = "light",
@@ -192,14 +206,10 @@ server <- function(input, output, session) {
         filter(Month == input$leads_month, Quarter == as.character(input$leads_quarter), Year == as.numeric(input$leads_year))
     }
   })
-  
-  
- 
 
 
   # Call the motor leads metrics module
   leadsmotorServer("motormetricsMod", filtered_data__leads_motor)
-  
 
 
 #2. MEDICAL LEADS --------------------------------------------------------------------------------------------------------------------------------------
@@ -223,6 +233,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "leads_medical_quarter", choices = quarter_choices, selected = "All")
     updateSelectInput(session, "leads_medical_year", choices = year_choices, selected = format(Sys.Date(), "%Y"))
   })
+  
   
   # Reactive expression to filter the data based on selected month, quarter, and year
   filtered_data__leads_medical <- reactive({
@@ -257,6 +268,16 @@ server <- function(input, output, session) {
 
   # Call the dry sales medical metrics module
   drysalesmedicalServer("drysalesmedicalMod", drysalesmedical)
+
+#5. CLAIMS -------------------------------------------------------------------------------------------------------------------------------------------
+  # Reactive expression to load and process data
+  claimsData <- reactive({
+    # Assuming you have a function `read_and_process_data_drysalesmotor` to load and process your data
+    read_and_process_data_claims("data/Claims Data.csv")
+  })
+  
+  claimsServer("claimsMod", claimsData)
+
 
 }
 
