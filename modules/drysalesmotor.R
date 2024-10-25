@@ -12,10 +12,6 @@ drysalesmotorUI <- function(id) {
           plotOutput(ns("drysalesbydayofweek")) %>% withSpinner(type = 6)),
     box(title = "Dry Sales Distribution by Day", status = "white", solidHeader = TRUE,
           plotlyOutput(ns("drysalesbyday")) %>% withSpinner(type = 6)),
-    box(title = "Day vs. Night Dry Shift Comparison", status = "white", solidHeader = TRUE, 
-          plotlyOutput(ns("dayNightComparison")) %>% withSpinner(type = 6)),
-    box(title = "Staff Performance on Dry Shifts", status = "white", solidHeader = TRUE,
-          plotlyOutput(ns("staffPerformance")) %>% withSpinner(type = 6)),
     box(title = "Dry Shifts by Time of Day", status = "white", solidHeader = TRUE,
           plotlyOutput(ns("dryShiftFrequencyByDayType")) %>% withSpinner(type = 6)),
     box(title = "Total Dry Sales Leads by Day of the Week", status = "white", solidHeader = TRUE,
@@ -128,47 +124,8 @@ output$drysalesbydayofweek <- renderPlot({
 })
 
 
-output$dayNightComparison <- renderPlotly({
-  data <- reactiveData() %>%
-    filter(Closed == 0) %>%
-    group_by(Date, `Time of Day`) %>%
-    summarise(DryShifts = n(), .groups = "drop") %>%
-    arrange(Date)
 
-  plot_ly(data, x = ~Date, y = ~DryShifts, type = 'bar', color = ~`Time of Day`, colors = c("Day" = "#FFD700", "Night" = "#1E90FF"),
-          hoverinfo = 'text',
-          text = ~paste('Date:', Date, '<br>Time of Day:', `Time of Day`, '<br>Dry Shifts:', DryShifts)) %>%
-    layout(
-      barmode = 'stack',
-      title = "Day vs. Night Dry Shift Comparison",
-      xaxis = list(title = "Date", tickformat = "%b %d, %Y"),
-      yaxis = list(title = "Number of Dry Shifts"),
-      font = list(family = "Arial", color = "black"),
-      plot_bgcolor = "white",
-      paper_bgcolor = "white"
-    )
-})
 
-output$staffPerformance <- renderPlotly({
-  data <- reactiveData()%>%
-    filter(Closed == 0) %>%
-    group_by(`Staff on Duty`, `Time of Day`) %>%
-    summarise(DryShifts = n(), .groups = "drop") %>%
-    arrange(desc(DryShifts))
-
-  plot_ly(data, x = ~`Staff on Duty`, y = ~DryShifts, type = 'bar', color = ~`Time of Day`, colors = c("Day" = "#FF6347", "Night" = "#4682B4"),
-          hoverinfo = 'text',
-          text = ~paste('Staff:', `Staff on Duty`, '<br>Time of Day:', `Time of Day`, '<br>Dry Shifts:', DryShifts)) %>%
-    layout(
-      barmode = 'group',
-      title = "Staff Performance on Dry Shifts",
-      xaxis = list(title = "Staff on Duty"),
-      yaxis = list(title = "Number of Dry Shifts"),
-      font = list(family = "Arial", color = "black"),
-      plot_bgcolor = "white",
-      paper_bgcolor = "white"
-    )
-})
 output$dryShiftsByTimeOfDay <- renderPlotly({
   data <- reactiveData() %>%
     filter(Closed == 0) %>%
