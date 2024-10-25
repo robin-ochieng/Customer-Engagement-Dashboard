@@ -72,7 +72,7 @@ body, .content-wrapper, .right-side, .main-footer, .main-header, .sidebar, .cont
 .main-sidebar {
     background-color: #fff !important;  /* Apply the desired color */
     width: 200px;
-    padding-top: 80px;
+    padding-top: 50px;
     position: fixed; /* Keep the sidebar fixed */
     top: 60px;   
     height: calc(100% - 60px);
