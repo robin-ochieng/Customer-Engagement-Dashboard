@@ -157,7 +157,6 @@ output$LeadsBySource <- renderPlotly({
       group_by(Source) %>%
       summarize(Count = n(), .groups = 'drop') %>%
       arrange(desc(Count))
-    
     # Create funnel chart in Plotly
     plot_ly(data, 
             y = ~reorder(Source, -Count), 
