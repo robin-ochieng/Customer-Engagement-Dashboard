@@ -36,3 +36,15 @@ read_and_process_data_drysalesmedical <- function(filepath) {
   
   return(Data)
 }
+
+
+
+
+read_and_process_data_claims <- function(filepath) {
+  Data <- read_csv(filepath, show_col_types = FALSE)
+
+  
+  return(Data)
+}
+
+
