@@ -1,7 +1,7 @@
 # Leads-Shiny-Dashboard
 
 ## Overview
-The Leads Dashboard is an interactive web application built using R and Shiny. It provides a comprehensive solution for tracking and visualizing leads data. The dashboard allows users to upload leads data, view summary statistics, and generate various visualizations to gain insights into leads patterns.
+The Customer Engagement Dashboard is an interactive web application built using R and Shiny. It provides a comprehensive solution for tracking and visualizing business prospects data. The dashboard allows users to view summary statistics, view various visualizations, and filter by different periods—Month, Quarter, Year—to gain insights into leads patterns.
 
 ## Features
 - **Summary Statistics**: View key statistics such as total leads, average leads, and conversion rates.
