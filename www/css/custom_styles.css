@@ -112,6 +112,7 @@ body, .content-wrapper, .right-side, .main-footer, .main-header, .sidebar, .cont
     margin-right: 10px; 
     background-color: #007bff;
     color: white; ;
+    font-size: 16px;
   }
 
     /* Sidebar Footer*/
@@ -180,3 +181,21 @@ table.dataTable {
 }
 
 
+/* Media query for screens smaller than 600px */
+@media (max-width: 720px) {
+    .header-title-container {
+        width: 250px; 
+        margin-left: 150px;
+    }
+    
+    .header-title {
+        font-size: 14px; /* Reduce the font size for small screens */
+    }
+
+      .control-button {
+        padding: 6px 12px; /* Smaller padding */
+        font-size: 12px; /* Smaller font size */
+        margin-right: 5px; /* Less margin on the right */
+      }
+
+}
