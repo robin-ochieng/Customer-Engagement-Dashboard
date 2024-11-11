@@ -47,11 +47,11 @@ ui <- dashboardPage(
       class = "text-center header-title-container",  # Added a new class for more specific styling
       tags$h4("Customer Engagement Dashboard", class = "header-title")
     ),
-  titleWidth = 400,
-  controlbarIcon = NULL,
-  sidebarIcon = NULL,
-  fixed = TRUE,
-  tags$div(class = "control-bar", actionButton("toggleControlbar", "Filters", class = "btn btn-primary control-button"))
+    titleWidth = 400,
+    controlbarIcon = NULL,
+    sidebarIcon = NULL,
+    fixed = TRUE,
+    tags$div(class = "control-bar", actionButton("toggleControlbar", "Filters", class = "btn btn-primary control-button"))
   ),
   dashboardSidebar(
     fixed = TRUE,
@@ -167,26 +167,26 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output, session) {
-
+  
   observeEvent(input$toggleControlbar, {
     updateBoxSidebar("dashboardControlbar")
   })
   
   # Load and process data
-
+  
   #load and process motor data
   leads_motor <- read_and_process_data_motor("data/Motor Leads.xlsx")
-
+  
   #load and process medical data
   leads_medical <- read_and_process_data_medical("data/Medical Leads.xlsx")
-
+  
   # Reactive expression to load and process data
   drysalesmotor <- read_and_process_data_drysalesmotor("data/Dry Shifts Data.xlsx")
-
+  
   # Reactive expression to load and process data
   drysalesmedical <- read_and_process_data_drysalesmedical("data/Dry Shifts Data.xlsx")
-
-
+  
+  
   #Data_medical <- read_and_process_data("data/Medical Leads.xlsx")
   
   #Medical
@@ -205,37 +205,37 @@ server <- function(input, output, session) {
     quarter_choices <- leads_motor$Quarter[!is.na(leads_motor$Quarter)] %>% unique()
     quarter_choices <- c("All" = "All", quarter_choices)
     year_choices <- leads_motor$Year[!is.na(leads_motor$Year)] %>% unique()
+    year_choices <- c("All" = "All", year_choices)
     
     updateSelectInput(session, "leads_month", choices = month_choices, selected = "All")
     updateSelectInput(session, "leads_quarter", choices = quarter_choices, selected = "All")
-    updateSelectInput(session, "leads_year", choices = year_choices, selected = format(Sys.Date(), "%Y"))
+    updateSelectInput(session, "leads_year", choices = year_choices, selected =  "All")
   })
   
   # Reactive expression to filter the data based on selected month, quarter, and year
   filtered_data__leads_motor <- reactive({
-    req(leads_motor)  
-    if (input$leads_month == "All" && input$leads_quarter == "All") {
-      leads_motor %>%
-        filter(Year == as.numeric(input$leads_year))
-    } else if (input$leads_quarter == "All") {
-      leads_motor %>%
-        filter(Month == input$leads_month, Year == as.numeric(input$leads_year))
-    } else if (input$leads_month == "All") {
-      leads_motor %>%
-        filter(Quarter == as.character(input$leads_quarter), Year == as.numeric(input$leads_year))
-    } else {
-      leads_motor %>%
-        filter(Month == input$leads_month, Quarter == as.character(input$leads_quarter), Year == as.numeric(input$leads_year))
+    req(leads_motor)
+    # Start with the full data and apply filters conditionally
+    data <- leads_motor
+    if (input$leads_year != "All") {
+      data <- data %>% filter(Year == as.numeric(input$leads_year))
     }
+    if (input$leads_month != "All") {
+      data <- data %>% filter(Month == input$leads_month)
+    }
+    if (input$leads_quarter != "All") {
+      data <- data %>% filter(Quarter == as.character(input$leads_quarter))
+    }
+    data
   })
-
-
+  
+  
   # Call the motor leads metrics module
   leadsmotorServer("motormetricsMod", filtered_data__leads_motor)
-
-
-#2. MEDICAL LEADS --------------------------------------------------------------------------------------------------------------------------------------
-
+  
+  
+  #2. MEDICAL LEADS --------------------------------------------------------------------------------------------------------------------------------------
+  
   observe({
     # Ensure Month is two digits for date parsing
     leads_medical <- leads_medical %>%
@@ -250,37 +250,37 @@ server <- function(input, output, session) {
     quarter_choices <- leads_medical$Quarter[!is.na(leads_medical$Quarter)] %>% unique()
     quarter_choices <- c("All" = "All", quarter_choices)
     year_choices <- leads_medical$Year[!is.na(leads_medical$Year)] %>% unique()
+    year_choices <- c("All" = "All", year_choices)
     
     updateSelectInput(session, "leads_medical_month", choices = month_choices, selected = "All")
     updateSelectInput(session, "leads_medical_quarter", choices = quarter_choices, selected = "All")
-    updateSelectInput(session, "leads_medical_year", choices = year_choices, selected = format(Sys.Date(), "%Y"))
+    updateSelectInput(session, "leads_medical_year", choices = year_choices, selected = "All")
   })
   
   
   # Reactive expression to filter the data based on selected month, quarter, and year
   filtered_data__leads_medical <- reactive({
-    req(leads_medical)  
-    if (input$leads_medical_month == "All" && input$leads_medical_quarter == "All") {
-      leads_medical %>%
-        filter(Year == as.numeric(input$leads_medical_year))
-    } else if (input$leads_medical_quarter == "All") {
-      leads_medical %>%
-        filter(Month == input$leads_medical_month, Year == as.numeric(input$leads_medical_year))
-    } else if (input$leads_medical_month == "All") {
-      leads_medical %>%
-        filter(Quarter == as.character(input$leads_medical_quarter), Year == as.numeric(input$leads_medical_year))
-    } else {
-      leads_medical %>%
-        filter(Month == input$leads_medical_month, Quarter == as.character(input$leads_medical_quarter), Year == as.numeric(input$leads_medical_year))
+    req(leads_medical)
+    # Start with the full data and apply filters conditionally
+    data <- leads_medical
+    if (input$leads_medical_year != "All") {
+      data <- data %>% filter(Year == as.numeric(input$leads_medical_year))
     }
+    if (input$leads_medical_month != "All") {
+      data <- data %>% filter(Month == input$leads_medical_month)
+    }
+    if (input$leads_medical_quarter != "All") {
+      data <- data %>% filter(Quarter == as.character(input$leads_medical_quarter))
+    }
+    data
   })
-
-
+  
+  
   # Call the medical leads metrics module
   leadsmedicalServer("medicalmetricsMod", filtered_data__leads_medical)
-
-
-#3. DRY SALES MOTOR -----------------------------------------------------------------------------------------------------------------------------------
+  
+  
+  #3. DRY SALES MOTOR -----------------------------------------------------------------------------------------------------------------------------------
   observe({
     # Ensure Month is two digits for date parsing
     drysalesmotor <- drysalesmotor %>%
@@ -295,35 +295,36 @@ server <- function(input, output, session) {
     quarter_choices <- drysalesmotor$Quarter[!is.na(drysalesmotor$Quarter)] %>% unique()
     quarter_choices <- c("All" = "All", quarter_choices)
     year_choices <- drysalesmotor$Year[!is.na(drysalesmotor$Year)] %>% unique()
+    year_choices <- c("All" = "All", year_choices)
     
     updateSelectInput(session, "drysalesmotor_month", choices = month_choices, selected = "All")
     updateSelectInput(session, "drysalesmotor_quarter", choices = quarter_choices, selected = "All")
-    updateSelectInput(session, "drysalesmotor_year", choices = year_choices, selected = format(Sys.Date(), "%Y"))
+    updateSelectInput(session, "drysalesmotor_year", choices = year_choices, selected = "All")
   })
   
   # Reactive expression to filter the data based on selected month, quarter, and year
   filtered_data_drysales_motor <- reactive({
-    req(drysalesmotor)  
-    if (input$drysalesmotor_month == "All" && input$drysalesmotor_quarter == "All") {
-      drysalesmotor %>%
-        filter(Year == as.numeric(input$drysalesmotor_year))
-    } else if (input$drysalesmotor_quarter == "All") {
-      drysalesmotor %>%
-        filter(Month == input$drysalesmotor_month, Year == as.numeric(input$drysalesmotor_year))
-    } else if (input$drysalesmotor_month == "All") {
-      drysalesmotor %>%
-        filter(Quarter == as.character(input$drysalesmotor_quarter), Year == as.numeric(input$drysalesmotor_year))
-    } else {
-      drysalesmotor %>%
-        filter(Month == input$drysalesmotor_month, Quarter == as.character(input$drysalesmotor_quarter), Year == as.numeric(input$drysalesmotor_year))
+    req(drysalesmotor)
+    # Start with the full data and apply filters conditionally
+    data <- drysalesmotor
+    if (input$drysalesmotor_year != "All") {
+      data <- data %>% filter(Year == as.numeric(input$drysalesmotor_year))
     }
+    if (input$drysalesmotor_month != "All") {
+      data <- data %>% filter(Month == input$drysalesmotor_month)
+    }
+    if (input$drysalesmotor_quarter != "All") {
+      data <- data %>% filter(Quarter == as.character(input$drysalesmotor_quarter))
+    }
+    data
   })
-
+  
+  
   # Call the dry sales motor metrics module
   drysalesmotorServer("drysalesmotorMod", filtered_data_drysales_motor)
   
-
-#4. DRY SALES MEDICAL ---------------------------------------------------------------------------------------------------------------------------------
+  
+  #4. DRY SALES MEDICAL ---------------------------------------------------------------------------------------------------------------------------------
   observe({
     # Ensure Month is two digits for date parsing
     drysalesmedical <- drysalesmedical %>%
@@ -338,39 +339,39 @@ server <- function(input, output, session) {
     quarter_choices <- drysalesmedical$Quarter[!is.na(drysalesmedical$Quarter)] %>% unique()
     quarter_choices <- c("All" = "All", quarter_choices)
     year_choices <- drysalesmedical$Year[!is.na(drysalesmedical$Year)] %>% unique()
+    year_choices <- c("All" = "All", year_choices)
     
     updateSelectInput(session, "drysalesmedical_month", choices = month_choices, selected = "All")
     updateSelectInput(session, "drysalesmedical_quarter", choices = quarter_choices, selected = "All")
-    updateSelectInput(session, "drysalesmedical_year", choices = year_choices, selected = format(Sys.Date(), "%Y"))
+    updateSelectInput(session, "drysalesmedical_year", choices = year_choices, selected = "All")
   })
   
   # Reactive expression to filter the data based on selected month, quarter, and year
   filtered_data_drysales_medical <- reactive({
-    req(drysalesmedical)  
-    if (input$drysalesmedical_month == "All" && input$drysalesmedical_quarter == "All") {
-      drysalesmedical %>%
-        filter(Year == as.numeric(input$drysalesmedical_year))
-    } else if (input$drysalesmedical_quarter == "All") {
-      drysalesmedical %>%
-        filter(Month == input$drysalesmedical_month, Year == as.numeric(input$drysalesmedical_year))
-    } else if (input$drysalesmedical_month == "All") {
-      drysalesmedical %>%
-        filter(Quarter == as.character(input$drysalesmedical_quarter), Year == as.numeric(input$drysalesmedical_year))
-    } else {
-      drysalesmedical %>%
-        filter(Month == input$drysalesmedical_month, Quarter == as.character(input$drysalesmedical_quarter), Year == as.numeric(input$drysalesmedical_year))
+    req(drysalesmedical)
+    # Start with the full data and apply filters conditionally
+    data <- drysalesmedical
+    if (input$drysalesmedical_year != "All") {
+      data <- data %>% filter(Year == as.numeric(input$drysalesmedical_year))
     }
+    if (input$drysalesmedical_month != "All") {
+      data <- data %>% filter(Month == input$drysalesmedical_month)
+    }
+    if (input$drysalesmedical_quarter != "All") {
+      data <- data %>% filter(Quarter == as.character(input$drysalesmedical_quarter))
+    }
+    data
   })
-
+  
   # Call the dry sales medical metrics module
   drysalesmedicalServer("drysalesmedicalMod", filtered_data_drysales_medical)
-
-
-
-
-
-
-#5. CLAIMS -------------------------------------------------------------------------------------------------------------------------------------------
+  
+  
+  
+  
+  
+  
+  #5. CLAIMS -------------------------------------------------------------------------------------------------------------------------------------------
   # Reactive expression to load and process data
   claimsData <- reactive({
     # Assuming you have a function `read_and_process_data_drysalesmotor` to load and process your data
@@ -378,8 +379,8 @@ server <- function(input, output, session) {
   })
   
   claimsServer("claimsMod", claimsData)
-
-
+  
+  
 }
 
 shinyApp(ui, server)
