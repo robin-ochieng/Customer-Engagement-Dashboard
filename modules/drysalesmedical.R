@@ -46,7 +46,7 @@ drysalesmedicalServer <- function(id, reactiveData) {
       data <- reactiveData()
       start_date <- as.Date("2024-01-01")
       last_date_in_data <- max(as.Date(data$Date))
-      total_days_in_year <- as.integer(last_date_in_data - start_date + 1) 
+      total_days_in_year <- as.integer(last_date_in_data - start_date + 1) * 2
       dry_days <- data %>%
         filter(Closed == 0) %>%
         summarise(DryDays = n_distinct(Date)) %>%
