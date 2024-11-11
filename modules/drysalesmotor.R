@@ -28,8 +28,6 @@ drysalesmotorUI <- function(id) {
 drysalesmotorServer <- function(id, reactiveData) {
   moduleServer(id, function(input, output, session) {
 
-
-
  # Unique Dry Shift Days
     output$uniqueDryShiftDays <- renderValueBox({
       data <- reactiveData()
