@@ -83,6 +83,14 @@ ui <- dashboardPage(
         sidebarMenu(
           menuItem("Claims", tabName = "claims", icon = icon("file-alt"))
         )
+      ),
+      tags$div(style = "margin-top: 50px;"),  
+      tags$div(
+        class = "leads-container",
+        tags$h3("Downtime", class = "leads-title"),
+        sidebarMenu(
+          menuItem("Downtime", tabName = "downtimeTracker", icon = icon("file-alt"))
+        )
       )
     ),
     div(class = "sidebar-footer",
@@ -132,6 +140,28 @@ ui <- dashboardPage(
       selectInput(inputId = "leads_medical_month", label = "Select Month", choices = NULL),
       selectInput(inputId = "leads_medical_quarter", label = "Select Quarter", choices = NULL),
       selectInput(inputId = "leads_medical_year", label = "Select Year", choices = NULL)
+    ),
+    bs4Card(
+      width = 12,
+      solidHeader = TRUE,
+      status = "primary",
+      title = HTML('<i class="fas fa-chart-line"></i> Motor Dry Sales Filters'),
+      background = "white",
+      class = "bs4-card-custom",
+      selectInput(inputId = "drysalesmotor_month", label = "Select Month", choices = NULL),
+      selectInput(inputId = "drysalesmotor_quarter", label = "Select Quarter", choices = NULL),
+      selectInput(inputId = "drysalesmotor_year", label = "Select Year", choices = NULL)
+    ),
+    bs4Card(
+      width = 12,
+      solidHeader = TRUE,
+      status = "primary",
+      title = HTML('<i class="fas fa-tools"></i> Medical Dry Sales Filters'),
+      background = "white",
+      class = "bs4-card-custom",
+      selectInput(inputId = "drysalesmedical_month", label = "Select Month", choices = NULL),
+      selectInput(inputId = "drysalesmedical_quarter", label = "Select Quarter", choices = NULL),
+      selectInput(inputId = "drysalesmedical_year", label = "Select Year", choices = NULL)
     )
   )
 )
@@ -150,19 +180,11 @@ server <- function(input, output, session) {
   #load and process medical data
   leads_medical <- read_and_process_data_medical("data/Medical Leads.xlsx")
 
-    # Reactive expression to load and process data
-  drysalesmotor <- reactive({
-    # Assuming you have a function `read_and_process_data_drysalesmotor` to load and process your data
-    read_and_process_data_drysalesmotor("data/Dry Shifts Data.xlsx")
-  })
-
-
+  # Reactive expression to load and process data
+  drysalesmotor <- read_and_process_data_drysalesmotor("data/Dry Shifts Data.xlsx")
 
   # Reactive expression to load and process data
-  drysalesmedical <- reactive({
-    # Assuming you have a function `read_and_process_data_drysalesmotor` to load and process your data
-    read_and_process_data_drysalesmedical("data/Dry Shifts Data.xlsx")
-  })
+  drysalesmedical <- read_and_process_data_drysalesmedical("data/Dry Shifts Data.xlsx")
 
 
   #Data_medical <- read_and_process_data("data/Medical Leads.xlsx")
@@ -259,15 +281,94 @@ server <- function(input, output, session) {
 
 
 #3. DRY SALES MOTOR -----------------------------------------------------------------------------------------------------------------------------------
+  observe({
+    # Ensure Month is two digits for date parsing
+    drysalesmotor <- drysalesmotor %>%
+      mutate(
+        Month = as.character(Month),
+        Month = trimws(Month),
+        Year = as.numeric(Year),
+        Quarter = as.character(Quarter))
+    
+    month_choices <- drysalesmotor$Month[!is.na(drysalesmotor$Month)] %>% unique()
+    month_choices <- c("All" = "All", month_choices)
+    quarter_choices <- drysalesmotor$Quarter[!is.na(drysalesmotor$Quarter)] %>% unique()
+    quarter_choices <- c("All" = "All", quarter_choices)
+    year_choices <- drysalesmotor$Year[!is.na(drysalesmotor$Year)] %>% unique()
+    
+    updateSelectInput(session, "drysalesmotor_month", choices = month_choices, selected = "All")
+    updateSelectInput(session, "drysalesmotor_quarter", choices = quarter_choices, selected = "All")
+    updateSelectInput(session, "drysalesmotor_year", choices = year_choices, selected = format(Sys.Date(), "%Y"))
+  })
+  
+  # Reactive expression to filter the data based on selected month, quarter, and year
+  filtered_data_drysales_motor <- reactive({
+    req(drysalesmotor)  
+    if (input$drysalesmotor_month == "All" && input$drysalesmotor_quarter == "All") {
+      drysalesmotor %>%
+        filter(Year == as.numeric(input$drysalesmotor_year))
+    } else if (input$drysalesmotor_quarter == "All") {
+      drysalesmotor %>%
+        filter(Month == input$drysalesmotor_month, Year == as.numeric(input$drysalesmotor_year))
+    } else if (input$drysalesmotor_month == "All") {
+      drysalesmotor %>%
+        filter(Quarter == as.character(input$drysalesmotor_quarter), Year == as.numeric(input$drysalesmotor_year))
+    } else {
+      drysalesmotor %>%
+        filter(Month == input$drysalesmotor_month, Quarter == as.character(input$drysalesmotor_quarter), Year == as.numeric(input$drysalesmotor_year))
+    }
+  })
 
   # Call the dry sales motor metrics module
-  drysalesmotorServer("drysalesmotorMod", drysalesmotor)
+  drysalesmotorServer("drysalesmotorMod", filtered_data_drysales_motor)
   
 
 #4. DRY SALES MEDICAL ---------------------------------------------------------------------------------------------------------------------------------
+  observe({
+    # Ensure Month is two digits for date parsing
+    drysalesmedical <- drysalesmedical %>%
+      mutate(
+        Month = as.character(Month),
+        Month = trimws(Month),
+        Year = as.numeric(Year),
+        Quarter = as.character(Quarter))
+    
+    month_choices <- drysalesmedical$Month[!is.na(drysalesmedical$Month)] %>% unique()
+    month_choices <- c("All" = "All", month_choices)
+    quarter_choices <- drysalesmedical$Quarter[!is.na(drysalesmedical$Quarter)] %>% unique()
+    quarter_choices <- c("All" = "All", quarter_choices)
+    year_choices <- drysalesmedical$Year[!is.na(drysalesmedical$Year)] %>% unique()
+    
+    updateSelectInput(session, "drysalesmedical_month", choices = month_choices, selected = "All")
+    updateSelectInput(session, "drysalesmedical_quarter", choices = quarter_choices, selected = "All")
+    updateSelectInput(session, "drysalesmedical_year", choices = year_choices, selected = format(Sys.Date(), "%Y"))
+  })
+  
+  # Reactive expression to filter the data based on selected month, quarter, and year
+  filtered_data_drysales_medical <- reactive({
+    req(drysalesmedical)  
+    if (input$drysalesmedical_month == "All" && input$drysalesmedical_quarter == "All") {
+      drysalesmedical %>%
+        filter(Year == as.numeric(input$drysalesmedical_year))
+    } else if (input$drysalesmedical_quarter == "All") {
+      drysalesmedical %>%
+        filter(Month == input$drysalesmedical_month, Year == as.numeric(input$drysalesmedical_year))
+    } else if (input$drysalesmedical_month == "All") {
+      drysalesmedical %>%
+        filter(Quarter == as.character(input$drysalesmedical_quarter), Year == as.numeric(input$drysalesmedical_year))
+    } else {
+      drysalesmedical %>%
+        filter(Month == input$drysalesmedical_month, Quarter == as.character(input$drysalesmedical_quarter), Year == as.numeric(input$drysalesmedical_year))
+    }
+  })
 
   # Call the dry sales medical metrics module
-  drysalesmedicalServer("drysalesmedicalMod", drysalesmedical)
+  drysalesmedicalServer("drysalesmedicalMod", filtered_data_drysales_medical)
+
+
+
+
+
 
 #5. CLAIMS -------------------------------------------------------------------------------------------------------------------------------------------
   # Reactive expression to load and process data
