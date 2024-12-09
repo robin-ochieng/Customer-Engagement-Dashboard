@@ -4,8 +4,8 @@ claimsUI <- function(id) {
   tagList(
     fluidRow(
       valueBoxOutput(ns("totalClaimsProcessed"), width = 4),
-      valueBoxOutput(ns("claimsAwaitingAction"), width = 4),               
-      valueBoxOutput(ns("mostFrequentClaimType"), width = 4)
+      valueBoxOutput(ns("claimsAwaitingAction"), width = 4),  
+      valueBoxOutput(ns("avgSettlementTime"), width = 4)
     ), 
   fluidRow(
       box(title = "Distribution of Claims by Insurer", status = "white", solidHeader = TRUE,
@@ -14,8 +14,8 @@ claimsUI <- function(id) {
           plotlyOutput(ns("typeofClaim")) %>% withSpinner(type = 8)),
       box(title = "Distribution of Claims by Status", status = "white", solidHeader = TRUE,
           plotlyOutput(ns("ClaimsByStatus")) %>% withSpinner(type = 8)),
-      box(title = "Settled vs Unsettled Claims", status = "white", solidHeader = TRUE,
-          plotlyOutput(ns("settledvsUnsettledClaims")) %>% withSpinner(type = 8)),
+      box(title = "Claims Reporting Timeline", status = "white", solidHeader = TRUE,
+          plotlyOutput(ns("claimsbyday")) %>% withSpinner(type = 8)),
    )
   )
 }                      
@@ -36,7 +36,7 @@ claimsServer <- function(id, reactiveData) {
 
     output$claimsAwaitingAction <- renderValueBox({
       data <- reactiveData()
-      awaiting_action <- sum(data$`Claim Status` %in% c("Awaiting settlement", "Undergoing Repairs", "Awaiting Assessment Report", "Under Investigation"))
+      awaiting_action <- sum(data$`Claim Status` %in% c("Awaiting settlement", "Undergoing Repairs", "Awaiting Assessment Report", "Awaiting refund", "Not Documented", "Awaiting supporting documents"))
       valueBox(
         value = awaiting_action,
         subtitle = "Claims Awaiting Action",
@@ -45,18 +45,16 @@ claimsServer <- function(id, reactiveData) {
       )
     })
 
-    output$mostFrequentClaimType <- renderValueBox({
-       data <- reactiveData()
-       claim_types <- table(data$`Type of Claim`)
-       total_claims <- sum(claim_types)
-       most_common_type <- names(sort(claim_types, decreasing = TRUE))[1]
-       most_common_count <- max(claim_types)
-       most_common_percentage <- (most_common_count / total_claims * 100)
-       valueBox(
-          value = sprintf("%s (%.2f%%)", most_common_count, most_common_percentage),
-          subtitle = paste("Top Claims:", most_common_type), 
-          icon = icon("chart-bar"),
-          color = "white"
+    output$avgSettlementTime <- renderValueBox({
+        data <- reactiveData()
+        data$`Date of Loss` <- as.Date(data$`Date of Loss`)
+        data$`Reported On` <- as.Date(data$`Reported On`)
+        avg_days <- mean(data$`Reported On` - data$`Date of Loss`, na.rm = TRUE)
+        valueBox(
+            value = round(avg_days, 2),
+            subtitle = "Average Claim Settlement Time (days)",
+            icon = icon("hourglass-half"),
+            color = "white"
         )
     })
 
@@ -151,30 +149,27 @@ output$ClaimsByStatus <- renderPlotly({
 
 
 
-custom_colors_settled_unsettled <- c("#007B7F",  "#76D7EA", "#002D62", "#2ca02c", "#2ca02c", "#F28E2B", "#d62728")
-output$settledvsUnsettledClaims <- renderPlotly({ 
-    data <- reactiveData()  # Ensure data is loaded and contains the right columns
-    # Filter out rows where 'Time of Day' might be NA
-    data <- data[!is.na(data$`Claim Status`), ]
-    # Group data by 'Time of Day' and count the occurrences
-    data <- data %>%
-        mutate(Permission = ifelse(`Claim Status` == "Settled", "Settled", "Unsettled")) %>%
-        count(Permission)
-    # Generate a qualitative color palette
-    num_categories <- length(unique(data$Permission))
-    # Create the donut chart
-    p <- plot_ly(data, labels = ~Permission, values = ~n, type = 'pie', hole = 0.4,
-                 textposition = 'outside', 
-                 texttemplate = "%{label}<br>%{value:,}<br>(%{percent})",   
-                 insidetextorientation = 'radial',  # Corrected the typo from 'tangetial' to 'radial'
-                 marker = list(colors = custom_colors_settled_unsettled),
-                 textfont = list(color = 'black', family = "Mulish", size = 10))
-    # Add title and display the plot
-    p <- p %>% layout(title = "Settled vs Unsettled Claims",
-                      showlegend = TRUE,
-                      font = list(family = "Mulish"))
-    p
+output$claimsbyday <- renderPlotly({
+    data <- reactiveData() %>%
+      group_by(`Reported On`) %>%
+      summarise(Claims = n(), .groups = "drop") %>%
+      arrange(`Reported On`)  # Ensure the dates are in chronological order
+  
+    # Plotting using Plotly
+    plot_ly(data, x = ~`Reported On`, y = ~Claims, type = 'scatter', mode = 'lines+markers',
+            line = list(color = '#1CA4F8'), marker = list(color = '#0d6efd'),
+            text = ~paste('Date:', `Reported On`, '<br>Leads:', Claims)) %>%  # Custom hover text
+      layout(
+        title = "Trend of Claims Reported Over Time",
+        xaxis = list(title = "Date", tickformat = "%b %d, %Y"),  # Formatting the date display for more granularity
+        yaxis = list(title = "Number of Reported Claims"),
+        font = list(family = "Mulish", color = "#333333"),  # Adjusting font style and color
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        hovermode = 'closest'  # Ensures hover effects are well defined for close data points
+      )
 })
+
 
   })
 }
