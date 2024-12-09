@@ -85,13 +85,13 @@ ui <- dashboardPage(
         )
       ),
       tags$div(style = "margin-top: 50px;"),  
-      tags$div(
-        class = "leads-container",
-        tags$h3("Downtime", class = "leads-title"),
-        sidebarMenu(
-          menuItem("Downtime", tabName = "downtimeTracker", icon = icon("file-alt"))
-        )
-      )
+     # tags$div(
+     #  class = "leads-container",
+     #  tags$h3("Valuation Report", class = "leads-title"),
+     #  sidebarMenu(
+     #   menuItem("valuation", tabName = "valuationReport", icon = icon("file-alt"))
+     #   )
+      #)
     ),
     div(class = "sidebar-footer",
         img(src = "images/kenbright2.png")
@@ -375,7 +375,7 @@ server <- function(input, output, session) {
   # Reactive expression to load and process data
   claimsData <- reactive({
     # Assuming you have a function `read_and_process_data_drysalesmotor` to load and process your data
-    read_and_process_data_claims("data/Claims Data.csv")
+    read_and_process_data_claims("data/Claims Data2.csv")
   })
   
   claimsServer("claimsMod", claimsData)
