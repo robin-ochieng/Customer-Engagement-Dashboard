@@ -5,7 +5,7 @@ account: kafsshinyapps
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13130804
-bundleId: 9344036
+bundleId: 9488105
 url: https://kafsshinyapps.shinyapps.io/CustomerEngagementDashboard/
 version: 1
 asMultiple: FALSE
