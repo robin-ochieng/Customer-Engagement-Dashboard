@@ -192,6 +192,7 @@ server <- function(input, output, session) {
   #Medical
   #1. MOTOR LEADS ---------------------------------------------------------------------------------------------------------------------------------------
   observe({
+    req(leads_motor)
     # Ensure Month is two digits for date parsing
     leads_motor <- leads_motor %>%
       mutate(
@@ -237,6 +238,7 @@ server <- function(input, output, session) {
   #2. MEDICAL LEADS --------------------------------------------------------------------------------------------------------------------------------------
   
   observe({
+    req(leads_medical)
     # Ensure Month is two digits for date parsing
     leads_medical <- leads_medical %>%
       mutate(
@@ -282,6 +284,7 @@ server <- function(input, output, session) {
   
   #3. DRY SALES MOTOR -----------------------------------------------------------------------------------------------------------------------------------
   observe({
+    req(drysalesmotor)
     # Ensure Month is two digits for date parsing
     drysalesmotor <- drysalesmotor %>%
       mutate(
@@ -326,6 +329,7 @@ server <- function(input, output, session) {
   
   #4. DRY SALES MEDICAL ---------------------------------------------------------------------------------------------------------------------------------
   observe({
+    req(drysalesmedical)
     # Ensure Month is two digits for date parsing
     drysalesmedical <- drysalesmedical %>%
       mutate(
